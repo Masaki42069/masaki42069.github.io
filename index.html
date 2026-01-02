@@ -3,16 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Seneca Cinema Tap Pause</title>
+    <title>Seneca Cinema Hold to Pause</title>
     <style>
       html, body {
         height: 100%;
         margin: 0;
       }
+
       body {
         display: grid;
         place-items: center;
         background: #000;
+        cursor: pointer;
       }
 
       .wrap {
@@ -28,20 +30,22 @@
         color: #fff;
         transform-origin: center;
         will-change: transform;
-        cursor: pointer;
+        animation-duration: 0.25s; /* 4 rotations per second */
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
       }
 
       .spin-cw {
-        animation: spin-cw 0.25s linear infinite;
+        animation-name: spin-cw;
       }
 
       .spin-ccw {
-        animation: spin-ccw 0.25s linear infinite;
+        animation-name: spin-ccw;
       }
 
-      /* PAUSE ON TAP / CLICK */
-      .spin-cw:active,
-      .spin-ccw:active {
+      /* HOLD ANYWHERE TO PAUSE BOTH */
+      body:active .spin-cw,
+      body:active .spin-ccw {
         animation-play-state: paused;
       }
 
