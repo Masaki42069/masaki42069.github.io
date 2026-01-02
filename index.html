@@ -3,65 +3,466 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Seneca Cinema Hold to Pause</title>
+    <title>Seneca Cinema Ticket Fight</title>
     <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-      }
+      html, body { height: 100%; margin: 0; overflow: hidden; background: #000; touch-action: none; }
+      #arena { position: relative; width: 100vw; height: 100vh; overflow: hidden; user-select: none; -webkit-user-select: none; font-family: "Times New Roman", Times, serif; color: #fff; }
 
-      body {
-        display: grid;
-        place-items: center;
-        background: #000;
-        cursor: pointer;
-      }
-
-      .wrap {
-        display: flex;
-        gap: 12px;
-      }
-
-      .spin-cw,
-      .spin-ccw {
-        font-family: "Times New Roman", Times, serif;
-        font-size: 32px;
-        font-weight: 400;
-        color: #fff;
+      /* Film OUTER: position only */
+      .film {
+        position: absolute;
+        font-size: 13px;
+        padding: 0; /* inner handles padding */
+        border: 0;  /* inner handles border */
+        background: transparent;
+        white-space: nowrap;
+        will-change: left, top, opacity;
         transform-origin: center;
-        will-change: transform;
-        animation-duration: 0.25s; /* 4 rotations per second */
-        animation-timing-function: linear;
-        animation-iteration-count: infinite;
       }
 
-      .spin-cw {
-        animation-name: spin-cw;
+      /* Film INNER: visuals + transforms */
+      .filmInner {
+        display: inline-block;
+        font-size: 13px;
+        padding: 6px 10px;
+        border: 1px solid rgba(255,255,255,0.22);
+        border-radius: 2px;
+        background: rgba(0,0,0,0.25);
+        white-space: nowrap;
+        will-change: transform, opacity;
       }
 
-      .spin-ccw {
-        animation-name: spin-ccw;
+      /* Centered fight button: rectangular, ~25% bigger */
+      #fightBtn {
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 23px; color: #000; background: #fff;
+        border: 0; border-radius: 0;
+        padding: 15px 25px;
+        cursor: pointer; z-index: 30;
+      }
+      #fightBtn.hidden { display: none; }
+
+      /* Small reset button (only after winner) */
+      #resetBtn {
+        position: absolute; left: 12px; top: 12px;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12px; color: #000; background: #fff;
+        border: 0; border-radius: 0;
+        padding: 7px 10px; cursor: pointer; z-index: 40;
+        display: none;
+      }
+      #resetBtn.on { display: block; }
+
+      /* Blade */
+      #blade {
+        position: absolute; width: 46px; height: 46px;
+        pointer-events: none; will-change: transform, left, top, opacity;
+        z-index: 8; opacity: 1; transition: opacity 220ms ease;
+      }
+      #blade.spin { animation: bladeSpin 0.35s linear infinite; }
+      #blade.hidden { opacity: 0; }
+      @keyframes bladeSpin { to { transform: rotate(360deg); } }
+
+      /* Blood splash */
+      .splash {
+        position: absolute; width: 5px; height: 5px; border-radius: 50%;
+        background: rgba(200, 30, 45, 0.95);
+        box-shadow:
+          10px 0px 0 0 rgba(200,30,45,0.70),
+          -10px 0px 0 0 rgba(200,30,45,0.70),
+          0px 10px 0 0 rgba(200,30,45,0.65),
+          0px -10px 0 0 rgba(200,30,45,0.65),
+          8px 8px 0 0 rgba(200,30,45,0.55),
+          -8px 8px 0 0 rgba(200,30,45,0.55),
+          8px -8px 0 0 rgba(200,30,45,0.50),
+          -8px -8px 0 0 rgba(200,30,45,0.50);
+        transform: translate(-50%, -50%) scale(0.8);
+        animation: splashPop 360ms ease-out forwards;
+        pointer-events: none; z-index: 35;
+      }
+      @keyframes splashPop {
+        0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+        25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(1.35); }
       }
 
-      /* HOLD ANYWHERE TO PAUSE BOTH */
-      body:active .spin-cw,
-      body:active .spin-ccw {
-        animation-play-state: paused;
+      /* Winner overlay */
+      #winnerOverlay {
+        position: absolute; inset: 0; display: none;
+        z-index: 22; pointer-events: none; background: rgba(0,0,0,0.55);
+      }
+      #winnerOverlay.on { display: block; }
+
+      #winnerInfo, #winnerVote {
+        position: absolute; left: 50%; transform: translateX(-50%);
+        text-align: center;
+      }
+      #winnerInfo { font-size: 16px; line-height: 1.35; color: rgba(255,255,255,0.92); white-space: nowrap; }
+      #winnerVote { font-size: 13px; line-height: 1.35; color: rgba(255,255,255,0.85); white-space: nowrap; }
+
+      /* Winner positioning: OUTER moves, INNER scales */
+      .winnerOuter {
+        left: 50% !important;
+        top: 44% !important; /* slightly above center */
+        transition: left var(--winDur, 620ms) ease, top var(--winDur, 620ms) ease;
+        z-index: 26;
+      }
+      .winnerOuter .filmInner {
+        transform: translate(-50%, -50%) scale(1.25);
+        transform-origin: center;
+        transition: transform var(--winDur, 620ms) ease;
       }
 
-      @keyframes spin-cw {
-        to { transform: rotate(360deg); }
+      /* Dance applies to INNER only (so it can't be overridden by position) */
+      .danceInner {
+        animation: dance 0.32s ease-in-out infinite alternate;
       }
-
-      @keyframes spin-ccw {
-        to { transform: rotate(-360deg); }
+      @keyframes dance {
+        0%   { transform: translate(-50%, -50%) rotate(-7deg) scale(1.25); }
+        100% { transform: translate(-50%, -50%) rotate(7deg) scale(1.25); }
       }
     </style>
   </head>
+
   <body>
-    <div class="wrap">
-      <div class="spin-cw">SENECA</div>
-      <div class="spin-ccw">CINEMA</div>
+    <div id="arena">
+      <button id="fightBtn">FIGHT</button>
+      <button id="resetBtn">Reset</button>
+
+      <div id="blade" class="spin" aria-hidden="true">
+        <svg viewBox="0 0 100 100" width="46" height="46">
+          <polygon
+            points="50,3 58,18 75,10 72,28 90,25 80,40 97,50 80,60 90,75 72,72 75,90 58,82 50,97 42,82 25,90 28,72 10,75 20,60 3,50 20,40 10,25 28,28 25,10 42,18"
+            fill="#bcbcbc"
+          />
+          <circle cx="50" cy="50" r="10" fill="#000000" />
+        </svg>
+      </div>
+
+      <div id="winnerOverlay">
+        <div id="winnerInfo">See you at Seneca Cinema!</div>
+        <div id="winnerVote">
+          <div>Vote for the film you want to win</div>
+          <div>on January 9 at our event.</div>
+        </div>
+      </div>
     </div>
+
+    <script>
+      const films = [
+        "Mi Vida Loca","Unknown Pleasures","Born in Flames","Breakfast on Pluto",
+        "The Happiness of the Katakuris","Offside","Mary Jane’s Not a Virgin Anymore",
+        "Alma’s Rainbow","Young Soul Rebels","The Wind Will Carry Us","Nuigulumar Z","The Time That Remains"
+      ];
+
+      const arena = document.getElementById("arena");
+      const blade = document.getElementById("blade");
+      const fightBtn = document.getElementById("fightBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const overlay = document.getElementById("winnerOverlay");
+      const winnerInfo = document.getElementById("winnerInfo");
+      const winnerVote = document.getElementById("winnerVote");
+
+      let W = window.innerWidth, H = window.innerHeight;
+      let running = false, rafId = null;
+      let filmNodes = [];
+
+      let bladeState = { x: W * 0.5, y: H * 0.25, vx: 1.0, vy: 0.85, r: 23 };
+      let speedStage = 0;
+
+      function resize() {
+        W = window.innerWidth; H = window.innerHeight;
+        const r = bladeState.r;
+        bladeState.x = Math.min(Math.max(bladeState.x, r), W - r);
+        bladeState.y = Math.min(Math.max(bladeState.y, r + 44), H - r);
+        positionBlade();
+        if (overlay.classList.contains("on")) {
+          const winner = filmNodes.find(f => f.alive);
+          if (winner) positionWinnerTexts(winner);
+        }
+      }
+      window.addEventListener("resize", resize);
+
+      function rand(min, max) { return min + Math.random() * (max - min); }
+      function rectsOverlap(a, b) {
+        return !(a.x + a.w <= b.x || a.x >= b.x + b.w || a.y + a.h <= b.y || a.y >= b.y + b.h);
+      }
+
+      function clearFilms() { for (const f of filmNodes) f.el.remove(); filmNodes = []; }
+
+      function positionBlade() {
+        blade.style.left = (bladeState.x - bladeState.r) + "px";
+        blade.style.top  = (bladeState.y - bladeState.r) + "px";
+      }
+
+      function resetBlade() {
+        bladeState.x = W * 0.5; bladeState.y = H * 0.25;
+        bladeState.vx = rand(-1.15, 1.15); bladeState.vy = rand(-1.0, 1.0);
+        if (Math.abs(bladeState.vx) < 0.55) bladeState.vx = 0.95 * Math.sign(bladeState.vx || 1);
+        if (Math.abs(bladeState.vy) < 0.45) bladeState.vy = 0.78 * Math.sign(bladeState.vy || 1);
+        speedStage = 0;
+        blade.classList.remove("hidden");
+        positionBlade();
+      }
+
+      function spawnFilmsNonOverlapping() {
+        clearFilms();
+
+        for (const name of films) {
+          const el = document.createElement("div");
+          el.className = "film";
+
+          const inner = document.createElement("span");
+          inner.className = "filmInner";
+          inner.textContent = name;
+
+          el.appendChild(inner);
+          arena.appendChild(el);
+
+          filmNodes.push({ el, inner, name, x: 0, y: 0, vx: 0, vy: 0, alive: true, w: 0, h: 0 });
+        }
+
+        // Measure using outer rect
+        for (const f of filmNodes) {
+          const r = f.el.getBoundingClientRect();
+          f.w = r.width; f.h = r.height;
+        }
+
+        const fightRect = fightBtn.getBoundingClientRect();
+        const fightZone = { x: fightRect.left - 18, y: fightRect.top - 18, w: fightRect.width + 36, h: fightRect.height + 36 };
+
+        const bladeZone = { x: (bladeState.x - bladeState.r) - 20, y: (bladeState.y - bladeState.r) - 20, w: (bladeState.r * 2) + 40, h: (bladeState.r * 2) + 40 };
+
+        const placed = [];
+        const topSafe = 54;
+
+        for (const f of filmNodes) {
+          let ok = false;
+
+          for (let attempts = 0; attempts < 900; attempts++) {
+            const x = rand(12, W - 12 - f.w);
+            const y = rand(topSafe, H - 12 - f.h);
+            const c = { x, y, w: f.w, h: f.h };
+
+            if (rectsOverlap(c, fightZone)) continue;
+            if (rectsOverlap(c, bladeZone)) continue;
+
+            let overlaps = false;
+            for (const p of placed) { if (rectsOverlap(c, p)) { overlaps = true; break; } }
+            if (overlaps) continue;
+
+            f.x = x + f.w / 2; f.y = y + f.h / 2;
+            f.el.style.left = x + "px";
+            f.el.style.top  = y + "px";
+            placed.push(c);
+            ok = true;
+            break;
+          }
+
+          if (!ok) {
+            const x = 12;
+            const y = topSafe + placed.length * (f.h + 6);
+            f.x = x + f.w / 2; f.y = y + f.h / 2;
+            f.el.style.left = x + "px";
+            f.el.style.top  = y + "px";
+            placed.push({ x, y, w: f.w, h: f.h });
+          }
+        }
+      }
+
+      function giveFilmsMotion() {
+        for (const f of filmNodes) {
+          let vx = rand(-1.45, 1.45), vy = rand(-1.20, 1.20);
+          if (Math.abs(vx) < 0.50) vx = 0.90 * Math.sign(vx || 1);
+          if (Math.abs(vy) < 0.42) vy = 0.72 * Math.sign(vy || -1);
+          f.vx = vx; f.vy = vy;
+        }
+      }
+
+      function splashAt(x, y) {
+        const s = document.createElement("div");
+        s.className = "splash";
+        s.style.left = x + "px";
+        s.style.top  = y + "px";
+        arena.appendChild(s);
+        setTimeout(() => s.remove(), 420);
+      }
+
+      function killFilm(f) {
+        if (!f.alive) return;
+        f.alive = false;
+        splashAt(f.x, f.y);
+        f.inner.style.transition = "transform 110ms ease, opacity 110ms ease";
+        f.inner.style.transform = "scale(0.80)";
+        f.inner.style.opacity = "0";
+        setTimeout(() => f.el.remove(), 140);
+      }
+
+      function circleRectHit(cx, cy, r, rx, ry, rw, rh) {
+        const closestX = Math.max(rx, Math.min(cx, rx + rw));
+        const closestY = Math.max(ry, Math.min(cy, ry + rh));
+        const dx = cx - closestX, dy = cy - closestY;
+        return (dx * dx + dy * dy) <= (r * r);
+      }
+
+      function positionWinnerTexts(winner) {
+        // Winner sits at y = 44% of screen; place text well below
+        const rect = winner.el.getBoundingClientRect();
+        const halfH = rect.height / 2;
+        const movieCenterY = H * 0.44;
+        const belowMovie = movieCenterY + halfH;
+
+        const infoTop = Math.min(H - 140, belowMovie + 72);
+        winnerInfo.style.top = infoTop + "px";
+
+        const voteTop = Math.min(H - 90, infoTop + 52);
+        winnerVote.style.top = voteTop + "px";
+      }
+
+      function stopWithWinner(winner) {
+        overlay.classList.add("on");
+        resetBtn.classList.add("on");
+
+        const winDur = 620;
+        winner.el.style.setProperty("--winDur", winDur + "ms");
+
+        // Move outer to target; inner scales via CSS
+        winner.el.classList.add("winnerOuter");
+        winner.el.style.left = "50%";
+        winner.el.style.top  = "44%";
+
+        // Reposition info during movement
+        const t0 = performance.now();
+        (function nudge() {
+          positionWinnerTexts(winner);
+          if (performance.now() - t0 < winDur + 150) requestAnimationFrame(nudge);
+        })();
+
+        // Blade disappears after 0.5s
+        setTimeout(() => blade.classList.add("hidden"), 500);
+
+        // Start dance AFTER arrival, dance for a few seconds, then stop
+        setTimeout(() => {
+          winner.inner.classList.add("danceInner");
+          positionWinnerTexts(winner);
+
+          setTimeout(() => {
+            winner.inner.classList.remove("danceInner");
+          }, 2800);
+        }, winDur + 60);
+      }
+
+      function applyBladeSpeedBumps(aliveCount) {
+        if (aliveCount === 5 && speedStage < 1) {
+          bladeState.vx *= 1.2; bladeState.vy *= 1.2; speedStage = 1;
+        } else if (aliveCount === 2 && speedStage < 2) {
+          bladeState.vx *= 1.2; bladeState.vy *= 1.2; speedStage = 2;
+        }
+      }
+
+      function tick() {
+        if (!running) return;
+
+        bladeState.x += bladeState.vx;
+        bladeState.y += bladeState.vy;
+
+        const r = bladeState.r;
+        if (bladeState.x < r) { bladeState.x = r; bladeState.vx *= -1; }
+        if (bladeState.x > W - r) { bladeState.x = W - r; bladeState.vx *= -1; }
+        if (bladeState.y < r + 34) { bladeState.y = r + 34; bladeState.vy *= -1; }
+        if (bladeState.y > H - r) { bladeState.y = H - r; bladeState.vy *= -1; }
+
+        positionBlade();
+
+        for (const f of filmNodes) {
+          if (!f.alive) continue;
+
+          f.x += f.vx; f.y += f.vy;
+
+          const halfW = f.w / 2, halfH = f.h / 2;
+          if (f.x < halfW) { f.x = halfW; f.vx *= -1; }
+          if (f.x > W - halfW) { f.x = W - halfW; f.vx *= -1; }
+          if (f.y < halfH + 34) { f.y = halfH + 34; f.vy *= -1; }
+          if (f.y > H - halfH) { f.y = H - halfH; f.vy *= -1; }
+
+          f.el.style.left = (f.x - halfW) + "px";
+          f.el.style.top  = (f.y - halfH) + "px";
+
+          const rx = f.x - halfW, ry = f.y - halfH;
+          const hitR = bladeState.r * 0.78;
+
+          if (circleRectHit(bladeState.x, bladeState.y, hitR, rx, ry, f.w, f.h)) {
+            killFilm(f);
+          }
+        }
+
+        const alive = filmNodes.filter(x => x.alive);
+        applyBladeSpeedBumps(alive.length);
+
+        if (alive.length === 1) {
+          running = false;
+          stopWithWinner(alive[0]);
+          return;
+        }
+
+        rafId = requestAnimationFrame(tick);
+      }
+
+      function start() {
+        overlay.classList.remove("on");
+        resetBtn.classList.remove("on");
+        blade.classList.remove("hidden");
+
+        // Clear any winner styling
+        for (const f of filmNodes) {
+          f.el.classList.remove("winnerOuter");
+          f.inner.classList.remove("danceInner");
+          f.inner.style.opacity = "1";
+          f.inner.style.transform = "";
+          f.inner.style.transition = "";
+        }
+
+        giveFilmsMotion();
+        resetBlade();
+
+        running = true;
+        fightBtn.classList.add("hidden");
+        blade.classList.add("spin");
+
+        tick();
+      }
+
+      function resetToIdle() {
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+        running = false;
+
+        overlay.classList.remove("on");
+        resetBtn.classList.remove("on");
+        fightBtn.classList.remove("hidden");
+
+        blade.classList.add("spin");
+        blade.classList.remove("hidden");
+
+        resetBlade();
+        spawnFilmsNonOverlapping();
+
+        for (const f of filmNodes) {
+          f.vx = 0; f.vy = 0;
+          f.el.classList.remove("winnerOuter");
+          f.inner.classList.remove("danceInner");
+          f.inner.style.opacity = "1";
+          f.inner.style.transform = "";
+          f.inner.style.transition = "";
+        }
+      }
+
+      fightBtn.addEventListener("click", start);
+      resetBtn.addEventListener("click", resetToIdle);
+
+      resetToIdle();
+      resize();
+    </script>
   </body>
 </html>
