@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Seneca Cinema Counter Spin</title>
+    <title>Seneca Cinema Tap Pause</title>
     <style>
       html, body {
         height: 100%;
@@ -23,19 +23,26 @@
       .spin-cw,
       .spin-ccw {
         font-family: "Times New Roman", Times, serif;
-        font-size: 32px; /* average size */
+        font-size: 32px;
         font-weight: 400;
         color: #fff;
         transform-origin: center;
         will-change: transform;
+        cursor: pointer;
       }
 
       .spin-cw {
-        animation: spin-cw 0.25s linear infinite; /* 4 rps */
+        animation: spin-cw 0.25s linear infinite;
       }
 
       .spin-ccw {
-        animation: spin-ccw 0.25s linear infinite; /* 4 rps */
+        animation: spin-ccw 0.25s linear infinite;
+      }
+
+      /* PAUSE ON TAP / CLICK */
+      .spin-cw:active,
+      .spin-ccw:active {
+        animation-play-state: paused;
       }
 
       @keyframes spin-cw {
