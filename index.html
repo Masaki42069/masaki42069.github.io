@@ -6,31 +6,61 @@
 
 <style>
 
-body{
-  margin:0;
-  overflow:hidden;
-  background:black;
+html,body{
+margin:0;
+padding:0;
+background:black;
+overflow:hidden;
+font-family:sans-serif;
 }
 
+/* ENTER SCREEN */
+
+#enterScreen{
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+background:black;
+z-index:10;
+}
+
+#enterButton{
+font-size:28px;
+padding:16px 36px;
+border:2px solid white;
+color:white;
+background:none;
+cursor:pointer;
+}
+
+/* CAROUSEL */
+
 .carousel{
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  width:100vw;
+display:flex;
+gap:10px;
+overflow-x:auto;
+overflow-y:hidden;
+width:100vw;
+scroll-snap-type:x mandatory;
+-webkit-overflow-scrolling:touch;
+scrollbar-width:none;
 }
 
 .carousel::-webkit-scrollbar{
-  display:none;
+display:none;
 }
 
 .carousel img{
-  width:100vw;
-  flex:0 0 100vw;
-  scroll-snap-align:start;
-  display:block;
+width:100vw;
+flex:0 0 100vw;
+scroll-snap-align:start;
+scroll-snap-stop:always;
+display:block;
 }
 
 </style>
@@ -39,67 +69,42 @@ body{
 
 <body>
 
+<div id="enterScreen">
+<button id="enterButton">ENTER</button>
+</div>
+
 <div class="carousel" id="carousel"></div>
 
 <script>
 
-const imageCount = 10;
-const carousel = document.getElementById("carousel");
+/* RANDOMIZE IMAGES */
 
-/* create array of image numbers */
-let slides = [];
-for(let i=1;i<=imageCount;i++){
-  slides.push(i);
+const slides=[1,2,3,4,5,6,7,8,9,10];
+const carousel=document.getElementById("carousel");
+
+function shuffle(array){
+for(let i=array.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[array[i],array[j]]=[array[j],array[i]];
+}
 }
 
-/* shuffle order */
-slides.sort(()=>Math.random()-0.5);
+shuffle(slides);
 
-/* create images */
 slides.forEach(num=>{
-  const img=document.createElement("img");
-  img.src=`images/Slide${num}.jpg`;
-  carousel.appendChild(img);
+const img=document.createElement("img");
+img.src=`images/Slide${num}.jpg`;
+carousel.appendChild(img);
 });
 
-/* block multi-slide flicking */
-let startIndex = 0;
-const gap = 10;
+/* ENTER BUTTON */
 
-function step(){
-  return window.innerWidth + gap;
-}
+const enterButton=document.getElementById("enterButton");
+const enterScreen=document.getElementById("enterScreen");
 
-function getIndex(){
-  return Math.round(carousel.scrollLeft / step());
-}
-
-function goTo(index){
-  carousel.scrollTo({
-    left:index*step(),
-    behavior:"smooth"
-  });
-}
-
-carousel.addEventListener("touchstart",()=>{
-  startIndex=getIndex();
-},{passive:true});
-
-carousel.addEventListener("touchend",()=>{
-
-  let current=getIndex();
-
-  /* allow only one slide movement */
-  if(current>startIndex+1) current=startIndex+1;
-  if(current<startIndex-1) current=startIndex-1;
-
-  /* stop at first/last slide (no loop) */
-  if(current<0) current=0;
-  if(current>imageCount-1) current=imageCount-1;
-
-  goTo(current);
-
-},{passive:true});
+enterButton.addEventListener("click",()=>{
+enterScreen.style.display="none";
+});
 
 </script>
 
