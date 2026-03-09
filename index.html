@@ -1,48 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carousel</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #111;
+      overflow-x: hidden;
+    }
 
-<style>
+    .carousel {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      width: 100vw;
+    }
 
-body{
-  margin:0;
-}
+    .carousel img {
+      width: 100vw;
+      height: auto;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+      display: block;
+    }
 
-.carousel{
-  display:flex;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling:touch;
-}
+    .carousel::-webkit-scrollbar {
+      display: none;
+    }
 
-.carousel img{
-  width:100vw;
-  height:auto;
-  flex-shrink:0;
-  scroll-snap-align:start;
-  display:block;
-}
-
-</style>
-
+    .carousel {
+      scrollbar-width: none;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="carousel">
-  <img src="images/slide1.jpg" alt="">
-  <img src="images/slide2.jpg" alt="">
-  <img src="images/slide3.jpg" alt="">
-  <img src="images/slide4.jpg" alt="">
-  <img src="images/slide5.jpg" alt="">
-  <img src="images/slide6.jpg" alt="">
-  <img src="images/slide7.jpg" alt="">
-  <img src="images/slide8.jpg" alt="">
-  <img src="images/slide9.jpg" alt="">
-  <img src="images/slide10.jpg" alt="">
-</div>
+  <div class="carousel">
+    <img src="images/slide1.jpg" alt="Slide 1">
+    <img src="images/slide2.jpg" alt="Slide 2">
+    <img src="images/slide3.jpg" alt="Slide 3">
+    <img src="images/slide4.jpg" alt="Slide 4">
+    <img src="images/slide5.jpg" alt="Slide 5">
+    <img src="images/slide6.jpg" alt="Slide 6">
+    <img src="images/slide7.jpg" alt="Slide 7">
+    <img src="images/slide8.jpg" alt="Slide 8">
+    <img src="images/slide9.jpg" alt="Slide 9">
+    <img src="images/slide10.jpg" alt="Slide 10">
+  </div>
 
 </body>
 </html>
