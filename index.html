@@ -45,7 +45,6 @@
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
-      touch-action: pan-x;
     }
 
     .carousel::-webkit-scrollbar {
@@ -99,23 +98,6 @@
     enterButton.addEventListener("click", () => {
       enterScreen.style.display = "none";
     });
-
-    let startX = 0;
-    let startY = 0;
-
-    carousel.addEventListener("touchstart", (e) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-    }, { passive: true });
-
-    carousel.addEventListener("touchmove", (e) => {
-      const dx = Math.abs(e.touches[0].clientX - startX);
-      const dy = Math.abs(e.touches[0].clientY - startY);
-
-      if (dx > dy) {
-        e.preventDefault();
-      }
-    }, { passive: false });
   </script>
 
 </body>
