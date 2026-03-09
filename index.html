@@ -11,13 +11,13 @@
       padding: 0;
       background: #000;
       overflow: hidden;
-      touch-action: pan-y;
     }
 
     .carousel {
       width: 100vw;
       overflow: hidden;
       position: relative;
+      touch-action: pan-y;
     }
 
     .track {
@@ -27,8 +27,8 @@
     }
 
     .slide {
-      width: 100vw;
       flex: 0 0 100vw;
+      width: 100vw;
     }
 
     .slide img {
@@ -59,7 +59,9 @@
   </div>
 
   <script>
+    const carousel = document.getElementById("carousel");
     const track = document.getElementById("track");
+
     const gap = 12;
     const totalSlides = 10;
 
@@ -68,38 +70,40 @@
     let currentX = 0;
     let isDragging = false;
 
-    function slideWidth() {
+    function stepWidth() {
       return window.innerWidth + gap;
     }
 
-    function setTranslate(x, animate = false) {
-      track.style.transition = animate ? "transform 0.28s ease" : "none";
-      track.style.transform = `translateX(${x}px)`;
+    function baseOffset() {
+      return -(index * stepWidth());
     }
 
-    function snapToIndex(animate = true) {
-      const baseX = -(index * slideWidth());
-      setTranslate(baseX, animate);
+    function setX(x, animate = false) {
+      track.style.transition = animate ? "transform 0.25s ease" : "none";
+      track.style.transform = `translate3d(${x}px, 0, 0)`;
     }
 
-    track.addEventListener("touchstart", (e) => {
+    function snapToCurrent(animate = true) {
+      setX(baseOffset(), animate);
+    }
+
+    carousel.addEventListener("pointerdown", (e) => {
       isDragging = true;
-      startX = e.touches[0].clientX;
-      currentX = startX;
+      startX = e.clientX;
+      currentX = e.clientX;
       track.style.transition = "none";
-    }, { passive: true });
+      carousel.setPointerCapture(e.pointerId);
+    });
 
-    track.addEventListener("touchmove", (e) => {
+    carousel.addEventListener("pointermove", (e) => {
       if (!isDragging) return;
 
-      currentX = e.touches[0].clientX;
+      currentX = e.clientX;
       const dx = currentX - startX;
-      const baseX = -(index * slideWidth());
+      setX(baseOffset() + dx, false);
+    });
 
-      setTranslate(baseX + dx, false);
-    }, { passive: true });
-
-    track.addEventListener("touchend", () => {
+    function endDrag() {
       if (!isDragging) return;
       isDragging = false;
 
@@ -112,19 +116,18 @@
         index = (index - 1 + totalSlides) % totalSlides;
       }
 
-      snapToIndex(true);
-    });
+      snapToCurrent(true);
+    }
 
-    track.addEventListener("touchcancel", () => {
-      isDragging = false;
-      snapToIndex(true);
-    });
+    carousel.addEventListener("pointerup", endDrag);
+    carousel.addEventListener("pointercancel", endDrag);
+    carousel.addEventListener("lostpointercapture", endDrag);
 
     window.addEventListener("resize", () => {
-      snapToIndex(false);
+      snapToCurrent(false);
     });
 
-    snapToIndex(false);
+    snapToCurrent(false);
   </script>
 
 </body>
