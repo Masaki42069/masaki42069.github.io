@@ -1,134 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carousel</title>
 
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      overflow: hidden;
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    .carousel {
-      width: 100vw;
-      overflow: hidden;
-      position: relative;
-      touch-action: pan-y;
-    }
+<style>
 
-    .track {
-      display: flex;
-      gap: 12px;
-      will-change: transform;
-    }
+body{
+  margin:0;
+  overflow:hidden;
+  background:black;
+}
 
-    .slide {
-      flex: 0 0 100vw;
-      width: 100vw;
-    }
+.carousel{
+  display:flex;
+  gap:10px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  width:100vw;
+}
 
-    .slide img {
-      display: block;
-      width: 100%;
-      height: auto;
-      user-select: none;
-      -webkit-user-drag: none;
-      pointer-events: none;
-    }
-  </style>
+.carousel::-webkit-scrollbar{
+  display:none;
+}
+
+.carousel img{
+  width:100vw;
+  flex:0 0 100vw;
+  scroll-snap-align:start;
+  display:block;
+}
+
+</style>
+
 </head>
+
 <body>
 
-  <div class="carousel" id="carousel">
-    <div class="track" id="track">
-      <div class="slide"><img src="images/Slide1.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide2.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide3.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide4.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide5.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide6.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide7.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide8.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide9.jpg" alt=""></div>
-      <div class="slide"><img src="images/Slide10.jpg" alt=""></div>
-    </div>
-  </div>
+<div class="carousel" id="carousel"></div>
 
-  <script>
-    const carousel = document.getElementById("carousel");
-    const track = document.getElementById("track");
+<script>
 
-    const gap = 12;
-    const totalSlides = 10;
+const imageCount = 10;
+const carousel = document.getElementById("carousel");
 
-    let index = 0;
-    let startX = 0;
-    let currentX = 0;
-    let isDragging = false;
+/* create array of image numbers */
+let slides = [];
+for(let i=1;i<=imageCount;i++){
+  slides.push(i);
+}
 
-    function stepWidth() {
-      return window.innerWidth + gap;
-    }
+/* shuffle order */
+slides.sort(()=>Math.random()-0.5);
 
-    function baseOffset() {
-      return -(index * stepWidth());
-    }
+/* create images */
+slides.forEach(num=>{
+  const img=document.createElement("img");
+  img.src=`images/Slide${num}.jpg`;
+  carousel.appendChild(img);
+});
 
-    function setX(x, animate = false) {
-      track.style.transition = animate ? "transform 0.25s ease" : "none";
-      track.style.transform = `translate3d(${x}px, 0, 0)`;
-    }
+/* block multi-slide flicking */
+let startIndex = 0;
+const gap = 10;
 
-    function snapToCurrent(animate = true) {
-      setX(baseOffset(), animate);
-    }
+function step(){
+  return window.innerWidth + gap;
+}
 
-    carousel.addEventListener("pointerdown", (e) => {
-      isDragging = true;
-      startX = e.clientX;
-      currentX = e.clientX;
-      track.style.transition = "none";
-      carousel.setPointerCapture(e.pointerId);
-    });
+function getIndex(){
+  return Math.round(carousel.scrollLeft / step());
+}
 
-    carousel.addEventListener("pointermove", (e) => {
-      if (!isDragging) return;
+function goTo(index){
+  carousel.scrollTo({
+    left:index*step(),
+    behavior:"smooth"
+  });
+}
 
-      currentX = e.clientX;
-      const dx = currentX - startX;
-      setX(baseOffset() + dx, false);
-    });
+carousel.addEventListener("touchstart",()=>{
+  startIndex=getIndex();
+},{passive:true});
 
-    function endDrag() {
-      if (!isDragging) return;
-      isDragging = false;
+carousel.addEventListener("touchend",()=>{
 
-      const dx = currentX - startX;
-      const threshold = 50;
+  let current=getIndex();
 
-      if (dx < -threshold) {
-        index = (index + 1) % totalSlides;
-      } else if (dx > threshold) {
-        index = (index - 1 + totalSlides) % totalSlides;
-      }
+  /* allow only one slide movement */
+  if(current>startIndex+1) current=startIndex+1;
+  if(current<startIndex-1) current=startIndex-1;
 
-      snapToCurrent(true);
-    }
+  /* stop at first/last slide (no loop) */
+  if(current<0) current=0;
+  if(current>imageCount-1) current=imageCount-1;
 
-    carousel.addEventListener("pointerup", endDrag);
-    carousel.addEventListener("pointercancel", endDrag);
-    carousel.addEventListener("lostpointercapture", endDrag);
+  goTo(current);
 
-    window.addEventListener("resize", () => {
-      snapToCurrent(false);
-    });
+},{passive:true});
 
-    snapToCurrent(false);
-  </script>
+</script>
 
 </body>
 </html>
