@@ -1,112 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carousel</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      font-family: sans-serif;
+    }
 
-<style>
+    #enterScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 42vh;
+      background: black;
+      z-index: 10;
+    }
 
-html,body{
-margin:0;
-padding:0;
-background:black;
-overflow:hidden;
-font-family:sans-serif;
-}
+    #enterButton {
+      font-size: 28px;
+      padding: 16px 36px;
+      border: 2px solid white;
+      color: white;
+      background: none;
+      cursor: pointer;
+    }
 
-/* ENTER SCREEN */
+    .carousel {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      width: 100vw;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      touch-action: pan-x;
+    }
 
-#enterScreen{
-position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
-display:flex;
-align-items:center;
-justify-content:center;
-background:black;
-z-index:10;
-}
+    .carousel::-webkit-scrollbar {
+      display: none;
+    }
 
-#enterButton{
-font-size:28px;
-padding:16px 36px;
-border:2px solid white;
-color:white;
-background:none;
-cursor:pointer;
-}
-
-/* CAROUSEL */
-
-.carousel{
-display:flex;
-gap:10px;
-overflow-x:auto;
-overflow-y:hidden;
-width:100vw;
-scroll-snap-type:x mandatory;
--webkit-overflow-scrolling:touch;
-scrollbar-width:none;
-}
-
-.carousel::-webkit-scrollbar{
-display:none;
-}
-
-.carousel img{
-width:100vw;
-flex:0 0 100vw;
-scroll-snap-align:start;
-scroll-snap-stop:always;
-display:block;
-}
-
-</style>
-
+    .carousel img {
+      width: 100vw;
+      height: auto;
+      flex: 0 0 100vw;
+      display: block;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+    }
+  </style>
 </head>
-
 <body>
 
-<div id="enterScreen">
-<button id="enterButton">ENTER</button>
-</div>
+  <div id="enterScreen">
+    <button id="enterButton">ENTER</button>
+  </div>
 
-<div class="carousel" id="carousel"></div>
+  <div class="carousel" id="carousel"></div>
 
-<script>
+  <script>
+    const slides = [1,2,3,4,5,6,7,8,9,10];
+    const carousel = document.getElementById("carousel");
+    const enterButton = document.getElementById("enterButton");
+    const enterScreen = document.getElementById("enterScreen");
 
-/* RANDOMIZE IMAGES */
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
 
-const slides=[1,2,3,4,5,6,7,8,9,10];
-const carousel=document.getElementById("carousel");
+    shuffle(slides);
 
-function shuffle(array){
-for(let i=array.length-1;i>0;i--){
-const j=Math.floor(Math.random()*(i+1));
-[array[i],array[j]]=[array[j],array[i]];
-}
-}
+    slides.forEach(num => {
+      const img = document.createElement("img");
+      img.src = `images/Slide${num}.jpg`;
+      img.alt = "";
+      carousel.appendChild(img);
+    });
 
-shuffle(slides);
+    enterButton.addEventListener("click", () => {
+      enterScreen.style.display = "none";
+    });
 
-slides.forEach(num=>{
-const img=document.createElement("img");
-img.src=`images/Slide${num}.jpg`;
-carousel.appendChild(img);
-});
+    let startX = 0;
+    let startY = 0;
 
-/* ENTER BUTTON */
+    carousel.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
 
-const enterButton=document.getElementById("enterButton");
-const enterScreen=document.getElementById("enterScreen");
+    carousel.addEventListener("touchmove", (e) => {
+      const dx = Math.abs(e.touches[0].clientX - startX);
+      const dy = Math.abs(e.touches[0].clientY - startY);
 
-enterButton.addEventListener("click",()=>{
-enterScreen.style.display="none";
-});
-
-</script>
+      if (dx > dy) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
 
 </body>
 </html>
