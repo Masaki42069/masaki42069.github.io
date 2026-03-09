@@ -23,7 +23,6 @@
     .track {
       display: flex;
       gap: 12px;
-      transition: transform 0.28s ease;
       will-change: transform;
     }
 
@@ -36,6 +35,9 @@
       display: block;
       width: 100%;
       height: auto;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -63,51 +65,66 @@
 
     let index = 0;
     let startX = 0;
-    let endX = 0;
+    let currentX = 0;
+    let isDragging = false;
 
-    function updateCarousel(animated = true) {
-      track.style.transition = animated ? "transform 0.28s ease" : "none";
-      const offset = index * (window.innerWidth + gap);
-      track.style.transform = `translateX(-${offset}px)`;
+    function slideWidth() {
+      return window.innerWidth + gap;
     }
 
-    function nextSlide() {
-      index = (index + 1) % totalSlides;
-      updateCarousel(true);
+    function setTranslate(x, animate = false) {
+      track.style.transition = animate ? "transform 0.28s ease" : "none";
+      track.style.transform = `translateX(${x}px)`;
     }
 
-    function prevSlide() {
-      index = (index - 1 + totalSlides) % totalSlides;
-      updateCarousel(true);
+    function snapToIndex(animate = true) {
+      const baseX = -(index * slideWidth());
+      setTranslate(baseX, animate);
     }
 
     track.addEventListener("touchstart", (e) => {
+      isDragging = true;
       startX = e.touches[0].clientX;
-      endX = startX;
+      currentX = startX;
+      track.style.transition = "none";
     }, { passive: true });
 
     track.addEventListener("touchmove", (e) => {
-      endX = e.touches[0].clientX;
+      if (!isDragging) return;
+
+      currentX = e.touches[0].clientX;
+      const dx = currentX - startX;
+      const baseX = -(index * slideWidth());
+
+      setTranslate(baseX + dx, false);
     }, { passive: true });
 
     track.addEventListener("touchend", () => {
-      const dx = endX - startX;
-      const threshold = 40;
+      if (!isDragging) return;
+      isDragging = false;
 
-      if (dx <= -threshold) {
-        nextSlide();
-      } else if (dx >= threshold) {
-        prevSlide();
-      } else {
-        updateCarousel(true);
+      const dx = currentX - startX;
+      const threshold = 50;
+
+      if (dx < -threshold) {
+        index = (index + 1) % totalSlides;
+      } else if (dx > threshold) {
+        index = (index - 1 + totalSlides) % totalSlides;
       }
+
+      snapToIndex(true);
+    });
+
+    track.addEventListener("touchcancel", () => {
+      isDragging = false;
+      snapToIndex(true);
     });
 
     window.addEventListener("resize", () => {
-      updateCarousel(false);
+      snapToIndex(false);
     });
 
-    updateCarousel(false);
+    snapToIndex(false);
   </script>
 
 </body>
