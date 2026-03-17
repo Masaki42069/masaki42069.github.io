@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>RIP S.C.</title>
   <style>
     html, body {
@@ -36,20 +36,22 @@
     }
 
     #controls {
-      position: absolute;
+      position: fixed;
       left: 50%;
-      bottom: 24px;
+      bottom: 20px;
       transform: translateX(-50%);
+      z-index: 999;
     }
 
     #fasterBtn {
       font-family: "Times New Roman", Times, serif;
-      font-size: 22px;
-      padding: 6px 16px;
+      font-size: 20px;
+      padding: 10px 20px;
       background: transparent;
       color: white;
       border: 1px solid white;
       cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
   </style>
 </head>
@@ -66,8 +68,9 @@
           stroke="#7a7a7a"
           stroke-width="2"
         />
-        <text x="45" y="50" text-anchor="middle" font-size="16" fill="#111">RIP</text>
-	<text x="45" y="72" text-anchor="middle" font-size="16" fill="#111">S.C.</text>
+        <!-- bigger-feeling placement -->
+        <text x="45" y="55" text-anchor="middle" font-size="16" fill="#111">RIP</text>
+        <text x="45" y="78" text-anchor="middle" font-size="16" fill="#111">S.C.</text>
       </svg>
     </div>
 
@@ -83,7 +86,8 @@
     let x = 120;
     let y = 80;
 
-    let speed = 4;
+    // 1/4 starting speed
+    let speed = 1;
     const speedMultiplier = 1.5;
     const maxSpeed = 550;
 
