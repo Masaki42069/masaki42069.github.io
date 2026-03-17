@@ -33,25 +33,28 @@
     #tombstone svg {
       width: 100%;
       height: 100%;
+      display: block;
     }
 
     #controls {
       position: fixed;
       left: 50%;
-      bottom: calc(32px + env(safe-area-inset-bottom));
+      bottom: 80px;
       transform: translateX(-50%);
-      z-index: 999;
+      z-index: 9999;
     }
 
     #fasterBtn {
       font-family: "Times New Roman", Times, serif;
       font-size: 20px;
+      line-height: 1;
       padding: 10px 20px;
       background: transparent;
       color: white;
       border: 1px solid white;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      appearance: none;
     }
   </style>
 </head>
@@ -68,8 +71,9 @@
           stroke="#7a7a7a"
           stroke-width="2"
         />
-        <text x="45" y="55" text-anchor="middle" font-size="16" fill="#111">RIP</text>
-        <text x="45" y="78" text-anchor="middle" font-size="16" fill="#111">S.C.</text>
+        <!-- bigger text, tighter spacing -->
+        <text x="45" y="60" text-anchor="middle" font-size="20" fill="#111">RIP</text>
+        <text x="45" y="80" text-anchor="middle" font-size="20" fill="#111">S.C.</text>
       </svg>
     </div>
 
@@ -85,7 +89,7 @@
     let x = 120;
     let y = 80;
 
-    let speed = 1; // slower start
+    let speed = 1;
     const speedMultiplier = 1.5;
     const maxSpeed = 550;
 
@@ -112,14 +116,20 @@
       x += dx;
       y += dy;
 
-      if (x < 0 || x > maxX) {
+      if (x < 0) {
+        x = 0;
         dx *= -1;
-        x = Math.max(0, Math.min(x, maxX));
+      } else if (x > maxX) {
+        x = maxX;
+        dx *= -1;
       }
 
-      if (y < 0 || y > maxY) {
+      if (y < 0) {
+        y = 0;
         dy *= -1;
-        y = Math.max(0, Math.min(y, maxY));
+      } else if (y > maxY) {
+        y = maxY;
+        dy *= -1;
       }
 
       tombstone.style.transform = `translate(${x}px, ${y}px)`;
